@@ -1,0 +1,27 @@
+{
+  "merchant": "Cafe Demo",
+  "currency": "EUR",
+  "items": [
+    {
+      "name": "Cappuccino",
+      "qty": 3,
+      "unitCents": 210,
+      "totalCents": 630
+    },
+    {
+      "name": "Croissant",
+      "qty": 2,
+      "unitCents": 185,
+      "totalCents": 370
+    },
+    {
+      "name": "Orange juice",
+      "qty": 1,
+      "unitCents": 395,
+      "totalCents": 395
+    }
+  ],
+  "taxCents": 0,
+  "tipCents": 0,
+  "totalCents": 1396
+}

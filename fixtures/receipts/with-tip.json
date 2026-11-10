@@ -1,0 +1,33 @@
+{
+  "merchant": "Diner Demo",
+  "currency": "USD",
+  "items": [
+    {
+      "name": "Burger",
+      "qty": 1,
+      "unitCents": 1495,
+      "totalCents": 1495
+    },
+    {
+      "name": "Club sandwich",
+      "qty": 1,
+      "unitCents": 1350,
+      "totalCents": 1350
+    },
+    {
+      "name": "Fries",
+      "qty": 1,
+      "unitCents": 550,
+      "totalCents": 550
+    },
+    {
+      "name": "Milkshake",
+      "qty": 2,
+      "unitCents": 695,
+      "totalCents": 1390
+    }
+  ],
+  "taxCents": 431,
+  "tipCents": 957,
+  "totalCents": 6173
+}

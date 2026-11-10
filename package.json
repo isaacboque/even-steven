@@ -18,5 +18,12 @@
     "@types/node": "^20.0.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.102",
+    "@ai-sdk/google": "^4.0.117",
+    "@ai-sdk/openai": "^4.0.114",
+    "ai": "^7.0.169",
+    "zod": "^4.6.7"
   }
 }

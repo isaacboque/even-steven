@@ -1,0 +1,33 @@
+{
+  "merchant": "Pizza Place Demo",
+  "currency": "USD",
+  "items": [
+    {
+      "name": "Large pepperoni",
+      "qty": 1,
+      "unitCents": 2199,
+      "totalCents": 2199
+    },
+    {
+      "name": "Large veggie",
+      "qty": 1,
+      "unitCents": 1999,
+      "totalCents": 1999
+    },
+    {
+      "name": "Garlic knots",
+      "qty": 1,
+      "unitCents": 699,
+      "totalCents": 699
+    },
+    {
+      "name": "Soda",
+      "qty": 3,
+      "unitCents": 299,
+      "totalCents": 897
+    }
+  ],
+  "taxCents": 512,
+  "tipCents": 0,
+  "totalCents": 6306
+}
