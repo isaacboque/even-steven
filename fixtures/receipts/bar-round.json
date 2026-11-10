@@ -1,0 +1,27 @@
+{
+  "merchant": "Bar Demo",
+  "currency": "EUR",
+  "items": [
+    {
+      "name": "Beer",
+      "qty": 5,
+      "unitCents": 350,
+      "totalCents": 1750
+    },
+    {
+      "name": "Vermouth",
+      "qty": 2,
+      "unitCents": 400,
+      "totalCents": 800
+    },
+    {
+      "name": "Patatas bravas",
+      "qty": 2,
+      "unitCents": 550,
+      "totalCents": 1100
+    }
+  ],
+  "taxCents": 0,
+  "tipCents": 0,
+  "totalCents": 3650
+}

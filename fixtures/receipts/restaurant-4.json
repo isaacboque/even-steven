@@ -1,0 +1,45 @@
+{
+  "merchant": "Trattoria Demo",
+  "currency": "EUR",
+  "items": [
+    {
+      "name": "Pizza margherita",
+      "qty": 1,
+      "unitCents": 1150,
+      "totalCents": 1150
+    },
+    {
+      "name": "Pizza diavola",
+      "qty": 1,
+      "unitCents": 1290,
+      "totalCents": 1290
+    },
+    {
+      "name": "Lasagna",
+      "qty": 1,
+      "unitCents": 1380,
+      "totalCents": 1380
+    },
+    {
+      "name": "Burrata (to share)",
+      "qty": 1,
+      "unitCents": 1200,
+      "totalCents": 1200
+    },
+    {
+      "name": "Water 1L",
+      "qty": 2,
+      "unitCents": 250,
+      "totalCents": 500
+    },
+    {
+      "name": "Tiramisu",
+      "qty": 2,
+      "unitCents": 600,
+      "totalCents": 1200
+    }
+  ],
+  "taxCents": 0,
+  "tipCents": 0,
+  "totalCents": 6720
+}
