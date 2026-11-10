@@ -6,20 +6,28 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json && vite build web",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json",
     "start": "node dist/index.js",
     "test": "vitest run",
     "smoke:sandbox": "tsx scripts/smoke-sandbox.ts",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "tsx scripts/eval.ts",
+    "dev": "concurrently -n api,web \"tsx watch src/index.ts\" \"vite web\""
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^10.0.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "tsx": "^4.23.15",
     "typescript": "^5.6.0",
+    "vite": "^5.4.21",
     "vitest": "^2.1.9"
   },
   "dependencies": {
