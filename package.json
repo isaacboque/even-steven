@@ -9,13 +9,15 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "smoke:sandbox": "tsx scripts/smoke-sandbox.ts"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.0",
     "vitest": "^2.1.9"
   },
@@ -23,7 +25,9 @@
     "@ai-sdk/anthropic": "^4.0.102",
     "@ai-sdk/google": "^4.0.117",
     "@ai-sdk/openai": "^4.0.114",
+    "@paypal/agent-toolkit": "^1.11.0",
     "ai": "^7.0.169",
+    "dotenv": "^18.0.10",
     "zod": "^4.6.7"
   }
 }

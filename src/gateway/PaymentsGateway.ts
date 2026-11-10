@@ -20,6 +20,8 @@ export type PaymentRequest = {
 export type CreateRequestInput = {
   billId: string;
   debtor: string;
+  /** Required by the PayPal gateway: the debtor's (sandbox) PayPal email. */
+  debtorEmail?: string;
   creditor: string;
   amountCents: Cents;
   currency: string;
