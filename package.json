@@ -1,0 +1,14 @@
+{
+  "name": "even-steven",
+  "version": "0.1.0",
+  "description": "Snap a receipt, split each item fairly, and send PayPal sandbox requests with the fewest payments needed. Nothing moves without approval.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18" }
+}
