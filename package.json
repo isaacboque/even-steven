@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "smoke:sandbox": "tsx scripts/smoke-sandbox.ts"
+    "smoke:sandbox": "tsx scripts/smoke-sandbox.ts",
+    "eval": "tsx scripts/eval.ts"
   },
   "engines": {
     "node": ">=18"

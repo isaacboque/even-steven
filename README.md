@@ -11,3 +11,32 @@ Scaffold only. Flows, approval queue, traces and evaluation are next.
 1. Copy `.env.example` to `.env` and add your PayPal sandbox credentials and LLM key. Never commit `.env`.
 2. `npm install`
 3. `npm run build && npm start`
+
+## Evaluation
+
+<!-- eval:start -->
+**20/20 scenarios pass all checks.**
+
+| Scenario | Setup | Transfers | sumsToTotal | minimalTransfers | settlesToZero | noDuplicates | approvalEnforced | remindersCorrect |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 2 people, 2 items, tax, tip | 1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S02 | 3 people, 5 items | 2 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S03 | 4 people, 9 items | 3 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S04 | 5 people, 6 items, tax | 4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S05 | 6 people, 5 items, tip | 5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S06 | 7 people, 7 items | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S07 | 8 people, 6 items, tax | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S08 | 2 people, 9 items | 1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S09 | 3 people, 2 items, tip | 1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S10 | 4 people, 9 items, tax | 3 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S11 | 5 people, 7 items | 4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S12 | 6 people, 4 items | 4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S13 | 7 people, 7 items, tax, tip | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S14 | 8 people, 4 items | 5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S15 | 2 people, 3 items | 1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S16 | 3 people, 7 items, tax | 2 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S17 | 4 people, 6 items, tip | 3 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S18 | 5 people, 4 items | 4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S19 | 6 people, 4 items, tax | 5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| S20 | 7 people, 7 items | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+<!-- eval:end -->
