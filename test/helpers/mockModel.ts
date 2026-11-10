@@ -16,3 +16,18 @@ export function textModel(...answers: string[]) {
   });
 }
 export { usage as mockUsage };
+
+type Step = { tools?: { name: string; input: unknown }[]; text?: string };
+/** A model that plays a script: each generate call returns the next step's tool calls (or final text). */
+export function scriptedModel(steps: Step[]) {
+  let i = 0;
+  return new MockLanguageModelV4({
+    doGenerate: async () => {
+      const s = steps[Math.min(i++, steps.length - 1)];
+      const content = s.tools
+        ? s.tools.map((t, k) => ({ type: "tool-call", toolCallId: `c${i}-${k}`, toolName: t.name, input: JSON.stringify(t.input) }))
+        : [{ type: "text", text: s.text ?? "done" }];
+      return { content, finishReason: { unified: s.tools ? "tool-calls" : "stop", raw: "x" }, usage, warnings: [] } as never;
+    },
+  });
+}
