@@ -15,6 +15,14 @@ export class VisionReader implements ReceiptReader {
       model: this.model,
       output: Output.object({ schema: ReadReceiptSchema }),
       messages: [{ role: "user", content: [{ type: "text", text: PROMPT }, { type: "file", data: image, mediaType }] }],
+      maxRetries: 1,
+      abortSignal: AbortSignal.timeout(Number(process.env.VISION_TIMEOUT_MS ?? 90_000)),
+    }).catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.tracer?.log({ billId: this.billId, step: "receipt.read", kind: "error", args: { bytes: image.byteLength, mediaType }, error: msg });
+      console.error(`[vision] receipt read failed after ${Date.now() - started} ms: ${msg}`);
+      if (/abort|timeout/i.test(msg)) throw new Error("Reading the photo took too long. Try a smaller or sharper photo, or a sample receipt.");
+      throw new Error(`Could not read the photo: ${msg}`);
     });
     const result = checkTotals(output, "vision");
     this.tracer?.log({

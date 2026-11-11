@@ -29,9 +29,9 @@ async function req<T>(path: string, init?: RequestInit & { json?: unknown }): Pr
 export const api = {
   config: () => req<Config>("/api/config"),
   fromFixture: (fixtureId: string) => req<Bill>("/api/bills", { method: "POST", json: { fixtureId } }),
-  fromPhoto: (file: File) => {
+  fromPhoto: async (file: File) => {
     const fd = new FormData();
-    fd.append("image", file);
+    fd.append("image", await shrink(file));
     return req<Bill>("/api/bills", { method: "POST", body: fd });
   },
   saveItems: (id: string, r: Bill["receipt"]) => req<Bill>(`/api/bills/${id}/items`, { method: "PUT", json: r }),
@@ -55,3 +55,20 @@ export const toCents = (s: string) => {
   const n = Number(s.replace(",", "."));
   return Number.isFinite(n) ? Math.round(n * 100) : NaN;
 };
+
+/** Phone photos are 3–10 MB: resize to max 1600 px JPEG before upload (faster and cheaper to read). Falls back to the original if the browser can't decode it (e.g. HEIC on Windows). */
+export async function shrink(file: File, max = 1600): Promise<File> {
+  try {
+    if (typeof createImageBitmap !== "function" || file.size < 600_000) return file;
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * k);
+    canvas.height = Math.round(bmp.height * k);
+    canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+    return blob ? new File([blob], "receipt.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
