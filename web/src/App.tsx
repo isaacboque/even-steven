@@ -73,7 +73,7 @@ export default function App() {
   );
 }
 
-const TONES = ["#3346d3", "#d2416e", "#12805c", "#b86e00", "#7b4bd6", "#0e7fa6"];
+const TONES = ["#3346d3", "#d2416e", "#7b4bd6", "#0e7fa6", "#8b5a3c", "#4a5578"];
 const toneOf = new Map<string, string>();
 /** One colour per person, handed out in order of first appearance so nobody shares a colour. */
 export function tone(name: string): string {
