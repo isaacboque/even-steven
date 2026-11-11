@@ -73,3 +73,6 @@ tr.sub td { color: var(--muted); } tr.total td { font-weight: 700; border-bottom
 .ev.approval .kindtag { background: #1f4d34; color: #a9f0c8; } .ev.error .kindtag { background: #5c1f1f; color: #ffb4b4; }
 .everr { color: #ff9b9b; margin-top: 4px; } .ev pre { white-space: pre-wrap; word-break: break-word; font-size: 11px; color: #c9cde0; margin: 8px 0 0; max-height: 260px; overflow: auto; }
 @media (max-width: 960px) { .shell { grid-template-columns: 1fr; } .trace { height: auto; position: static; max-height: 60vh; } .person { grid-template-columns: 1fr; } }
+.foot { margin-top: 32px; text-align: center; }
+.linklike { background: none; border: 0; padding: 0; color: var(--muted, #6b7280); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; }
+.linklike:disabled { opacity: .5; cursor: default; }

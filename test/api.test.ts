@@ -15,7 +15,7 @@ function setup(model?: AppDeps["model"]) {
   const tracer = new MemoryTracer(now);
   const approvals = new ApprovalQueue(tracer, { now });
   gw = new MockGateway(approvals, tracer, now);
-  deps = { bills: new BillStore(), approvals, gateway: gw, tracer, fixtures: new FixtureReader(), model, clock: { now, advanceDays: (d) => (offset += d * 86400000) } };
+  deps = { bills: new BillStore(), approvals, gateway: gw, tracer, fixtures: new FixtureReader(), model, clock: { now, advanceDays: (d) => (offset += d * 86400000), reset: () => (offset = 0) } };
   app = createApp(deps);
 }
 const json = (method: string, body?: unknown) => ({ method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
@@ -29,6 +29,40 @@ async function bill() {
   expect(r.status).toBe(200);
   return b.id as string;
 }
+
+describe("demo reset", () => {
+  beforeEach(() => setup());
+  it("clears bills, approvals, requests, idempotency store and the clock after a full flow", async () => {
+    const id = await bill();
+    const run = await (await app.request(`/api/bills/${id}/propose`, json("POST"))).json();
+    await app.request(`/api/approvals/${run.proposals[0].id}/approve`, json("POST"));
+    await app.request("/api/dev/advance", json("POST", { days: 5 }));
+    expect(gw.providerCreates).toBe(1);
+
+    const r = await app.request("/api/dev/reset", json("POST"));
+    expect(r.status).toBe(200);
+    expect(await (await app.request("/api/bills")).json()).toEqual([]);
+    expect(await (await app.request("/api/approvals")).json()).toEqual([]);
+    expect(await gw.list()).toEqual([]);
+    expect(deps.clock.now().toISOString()).toBe(new Date(Date.UTC(2026, 10, 12)).toISOString());
+
+    // same bill + same payment can be created again (idempotency store was cleared)
+    const id2 = await bill();
+    const run2 = await (await app.request(`/api/bills/${id2}/propose`, json("POST"))).json();
+    expect(run2.proposals).toHaveLength(3);
+    const before = gw.providerCreates;
+    await app.request(`/api/approvals/${run2.proposals[0].id}/approve`, json("POST"));
+    expect(gw.providerCreates).toBe(before + 1);
+  });
+  it("is a 404 when the gateway is not the mock (paypal mode)", async () => {
+    const fake = { name: "paypal", createRequest: gw.createRequest, sendReminder: gw.sendReminder, cancel: gw.cancel, getStatus: gw.getStatus, list: gw.list } as unknown as AppDeps["gateway"];
+    const paypalApp = createApp({ ...deps, gateway: fake, clock: { now: deps.clock.now } });
+    await bill();
+    expect((await paypalApp.request("/api/dev/reset", json("POST"))).status).toBe(404);
+    expect((await paypalApp.request("/api/bills")).status).toBe(200);
+    expect(((await (await paypalApp.request("/api/bills")).json()) as unknown[]).length).toBe(1); // nothing cleared
+  });
+});
 
 describe("API flow with the rules agent", () => {
   beforeEach(() => setup());

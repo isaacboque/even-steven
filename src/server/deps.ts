@@ -31,6 +31,10 @@ export function depsFromEnv(env: NodeJS.ProcessEnv = process.env): AppDeps {
     fixtures: new FixtureReader(),
     vision: model ? (billId: string) => new VisionReader(model, tracer, billId) : undefined,
     model,
-    clock: { now, advanceDays: mode === "mock" ? (d: number) => (offsetMs += d * 86400000) : undefined },
+    clock: {
+      now,
+      advanceDays: mode === "mock" ? (d: number) => (offsetMs += d * 86400000) : undefined,
+      reset: mode === "mock" ? () => (offsetMs = 0) : undefined,
+    },
   };
 }

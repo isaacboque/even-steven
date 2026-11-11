@@ -20,7 +20,7 @@ export type AppDeps = {
   fixtures: FixtureReader;
   vision?: (billHint: string) => ReceiptReader;
   model?: LanguageModel;
-  clock: { now: () => Date; advanceDays?: (d: number) => void };
+  clock: { now: () => Date; advanceDays?: (d: number) => void; reset?: () => void };
   reminderAfterDays?: number;
 };
 
@@ -28,13 +28,16 @@ export function createApp(d: AppDeps) {
   const app = new Hono();
   const reminderAfterDays = d.reminderAfterDays ?? 3;
 
+  /** The demo reset only exists with the mock gateway; paypal mode never exposes it. */
+  const canReset = () => d.gateway instanceof MockGateway;
+
   app.onError((err, c) => {
     const status = err instanceof NotFound ? 404 : err instanceof SplitError ? 422 : 400;
     return c.json({ error: err.message }, status);
   });
 
   app.get("/api/config", (c) =>
-    c.json({ gateway: d.gateway.name, agent: d.model ? "llm" : "rules", vision: Boolean(d.vision), fixtures: d.fixtures.list(), reminderAfterDays, now: d.clock.now().toISOString() }),
+    c.json({ gateway: d.gateway.name, resettable: canReset(), agent: d.model ? "llm" : "rules", vision: Boolean(d.vision), fixtures: d.fixtures.list(), reminderAfterDays, now: d.clock.now().toISOString() }),
   );
 
   // 1. receipt → bill
@@ -158,6 +161,14 @@ export function createApp(d: AppDeps) {
     const { days = 1 } = (await c.req.json().catch(() => ({}))) as { days?: number };
     d.clock.advanceDays(days);
     return c.json({ now: d.clock.now().toISOString() });
+  });
+  app.post("/api/dev/reset", (c) => {
+    if (!(d.gateway instanceof MockGateway)) return c.json({ error: "Not found" }, 404);
+    d.bills.clear();
+    d.approvals.clear();
+    d.gateway.reset();
+    d.clock.reset?.();
+    return c.json({ ok: true, now: d.clock.now().toISOString() });
   });
   app.post("/api/dev/paid/:requestId", (c) => {
     if (!(d.gateway instanceof MockGateway)) throw new Error("Only in mock mode: pay the invoice in the PayPal sandbox instead");

@@ -12,7 +12,7 @@ export type Approval = {
 };
 export type PaymentRequest = { id: string; debtor: string; amountCents: number; status: string; remindersSent: number; createdAt: string; externalUrl?: string };
 export type TraceEvent = { ts: string; step: string; kind: string; args?: unknown; result?: unknown; error?: string };
-export type Config = { gateway: string; agent: string; vision: boolean; fixtures: string[]; reminderAfterDays: number; now: string };
+export type Config = { gateway: string; agent: string; vision: boolean; fixtures: string[]; reminderAfterDays: number; now: string; resettable?: boolean };
 export type AgentRun = { proposals: Approval[]; summary: string; mode: string; refused: string[] };
 
 async function req<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
@@ -45,6 +45,7 @@ export const api = {
   requests: (id: string) => req<PaymentRequest[]>(`/api/bills/${id}/requests`),
   trace: (id: string) => req<TraceEvent[]>(`/api/bills/${id}/trace`),
   advance: (days: number) => req<{ now: string }>("/api/dev/advance", { method: "POST", json: { days } }),
+  reset: () => req<{ ok: boolean }>("/api/dev/reset", { method: "POST", json: {} }),
   markPaid: (requestId: string) => req<unknown>(`/api/dev/paid/${requestId}`, { method: "POST", json: {} }),
 };
 

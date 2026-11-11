@@ -67,6 +67,17 @@ export default function App() {
         {step === 1 && bill && <PeopleStep bill={bill} busy={busy} run={run} onBill={setBill} onNext={() => setStep(2)} />}
         {step === 2 && bill && <SettleStep bill={bill} busy={busy} run={run} onNext={() => setStep(3)} />}
         {step === 3 && bill && config && <ApproveStep bill={bill} config={config} busy={busy} run={run} />}
+        {config?.gateway === "mock" && (
+          <footer className="foot">
+            <button
+              className="linklike"
+              disabled={busy}
+              onClick={() => run(() => api.reset()).then((r) => { if (r) { setBill(undefined); setStep(0); } })}
+            >
+              Reset demo
+            </button>
+          </footer>
+        )}
       </main>
       <TracePanel billId={bill?.id} />
     </div>

@@ -83,6 +83,11 @@ export class ApprovalQueue {
     a.result = result;
     this.persist();
   }
+  /** Demo reset: drop every approval (the id counter keeps going so ids stay unique in the traces). */
+  clear(): void {
+    this.items.clear();
+    this.persist();
+  }
   get(id: string): Approval {
     const a = this.items.get(id);
     if (!a) throw new Error(`Unknown approval ${id}`);
