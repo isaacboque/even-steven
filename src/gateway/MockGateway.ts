@@ -17,6 +17,13 @@ export class MockGateway implements PaymentsGateway {
     private now: () => Date = () => new Date(),
   ) {}
 
+  /** Demo reset: forget every request and the idempotency keys. */
+  reset(): void {
+    this.requests.clear();
+    this.byKey.clear();
+    this.providerCreates = 0;
+  }
+
   async createRequest(input: CreateRequestInput): Promise<PaymentRequest> {
     const existing = this.byKey.get(input.idempotencyKey);
     if (existing) {

@@ -45,6 +45,11 @@ export class BillStore {
   list(): Bill[] {
     return [...this.bills.values()];
   }
+  /** Demo reset: drop every bill. The id counter keeps going so a retaken demo never reuses an old trace file. */
+  clear(): void {
+    this.bills.clear();
+    this.save();
+  }
   private save() {
     if (!this.file) return;
     mkdirSync(dirname(this.file), { recursive: true });
