@@ -118,7 +118,7 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
           </button>
         ))}
       </div>
-      {busy && !draft && <p className="muted" role="status">Reading…</p>}
+      {busy && !draft && <p className="muted" role="status">Reading the receipt… this can take up to 30 seconds.</p>}
 
       {draft && bill && (
         <>
