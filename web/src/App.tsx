@@ -28,7 +28,7 @@ export default function App() {
       <main>
         <header className="top">
           <div className="brand">
-            <span className="logo">=</span>
+            <span className="logo" aria-hidden><i /><i /></span>
             <div>
               <h1>Even Steven</h1>
               <p>Snap it. Split it. Settle it. Nothing moves without your approval.</p>
@@ -44,8 +44,8 @@ export default function App() {
 
         <nav className="stepper">
           {STEPS.map((s, i) => (
-            <button key={s} className={i === step ? "on" : i < step ? "done" : ""} disabled={!bill || i > maxStep(bill)} onClick={() => setStep(i as Step)}>
-              <b>{i + 1}</b> {s}
+            <button key={s} className={i === step ? "on" : i < step ? "done" : ""} disabled={!bill || i > maxStep(bill)} onClick={() => setStep(i as Step)} aria-current={i === step ? "step" : undefined}>
+              <b>{i < step ? "✓" : i + 1}</b> <span>{s}</span>
             </button>
           ))}
         </nav>
@@ -73,6 +73,19 @@ export default function App() {
   );
 }
 
+const TONES = ["#3346d3", "#d2416e", "#7b4bd6", "#0e7fa6", "#8b5a3c", "#4a5578"];
+const toneOf = new Map<string, string>();
+/** One colour per person, handed out in order of first appearance so nobody shares a colour. */
+export function tone(name: string): string {
+  const key = name.trim().toLowerCase();
+  if (!key) return "#9aa0b4";
+  if (!toneOf.has(key)) toneOf.set(key, TONES[toneOf.size % TONES.length]);
+  return toneOf.get(key)!;
+}
+function Avatar({ name }: { name: string }) {
+  return <span className="avatar" style={{ background: tone(name) }} aria-hidden>{name.trim().charAt(0).toUpperCase() || "?"}</span>;
+}
+
 function maxStep(b: Bill): number {
   if (b.mismatchCents !== 0) return 0;
   if (!b.payer) return 1;
@@ -92,13 +105,13 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
 
   return (
     <section className="card">
-      <h2>1 · Read the receipt</h2>
+      <h2>Read the receipt</h2>
       <div className="row wrap">
         <label className={`upload ${config?.vision ? "" : "off"}`} title={config?.vision ? "" : "Set an LLM key to read photos"}>
-          📷 Upload a photo
+          Upload a photo
           <input type="file" accept="image/*" disabled={!config?.vision || busy} onChange={(e) => e.target.files?.[0] && run(() => api.fromPhoto(e.target.files![0])).then((b) => b && onBill(b))} />
         </label>
-        <span className="muted">or try a sample:</span>
+        <span className="muted">or use a sample</span>
         {config?.fixtures.map((f) => (
           <button key={f} className="chip" disabled={busy} onClick={() => run(() => api.fromFixture(f)).then((b) => b && onBill(b))}>
             {FIXTURE_LABEL[f] ?? f}
@@ -109,7 +122,9 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
 
       {draft && bill && (
         <>
-          <h3>{bill.merchant || "Receipt"} — check every line</h3>
+          <p className="muted hint">Check every line against the paper. Tap any name or amount to fix it.</p>
+          <div className="slip">
+          <div className="slip-head">{bill.merchant || "Receipt"}</div>
           <table className="items">
             <thead><tr><th>Item</th><th className="num">Amount</th></tr></thead>
             <tbody>
@@ -124,7 +139,8 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
               <tr className="total"><td>Total on receipt</td><td className="num"><MoneyInput cents={draft.totalCents} onChange={(c) => setDraft({ ...draft, totalCents: c })} /></td></tr>
             </tbody>
           </table>
-          <button className="ghost" onClick={() => setDraft({ ...draft, items: [...draft.items, { id: `i${Date.now()}`, name: "New item", totalCents: 0 }] })}>+ Add line</button>
+          <button className="ghost addline" onClick={() => setDraft({ ...draft, items: [...draft.items, { id: `i${Date.now()}`, name: "New item", totalCents: 0 }] })}>+ Add line</button>
+          </div>
           {mismatch !== 0 ? (
             <div className="alert warn">The lines add up to {money(draft.totalCents - mismatch, cur)} but the receipt says {money(draft.totalCents, cur)} (off by {money(Math.abs(mismatch), cur)}, {Math.abs(mismatch)} cent{Math.abs(mismatch) === 1 ? "" : "s"}). Fix a line before continuing — Even Steven never guesses money.</div>
           ) : (
@@ -132,7 +148,7 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
           )}
           <div className="actions">
             <button className="primary" disabled={busy || mismatch !== 0} onClick={() => run(() => api.saveItems(bill.id, draft)).then((b) => { if (b) { onBill(b); onNext(); } })}>
-              {busy ? "Saving…" : "Continue →"}
+              {busy ? "Saving…" : "Continue"}
             </button>
           </div>
         </>
@@ -180,13 +196,14 @@ function PeopleStep({ bill, busy, run, onBill, onNext }: { bill: Bill; busy: boo
 
   return (
     <section className="card">
-      <h2>2 · Who was there, who paid, who had what</h2>
+      <h2>Who was there, and who had what</h2>
       <div className="people">
         {people.map((p, k) => (
           <div className="person" key={k}>
+            <Avatar name={p.name} />
             <input placeholder="Name" value={p.name} onChange={(e) => setPeople(people.map((x, i) => (i === k ? { ...x, name: e.target.value } : x)))} />
             <input placeholder="PayPal email (sandbox)" value={p.email ?? ""} onChange={(e) => setPeople(people.map((x, i) => (i === k ? { ...x, email: e.target.value } : x)))} />
-            <label className="payer"><input type="radio" checked={payer === p.name} onChange={() => setPayer(p.name)} /> paid</label>
+            <label className={`payer ${payer === p.name && p.name ? "on" : ""}`}><input type="radio" checked={payer === p.name} onChange={() => setPayer(p.name)} /> paid the bill</label>
           </div>
         ))}
         <button className="ghost" onClick={() => setPeople([...people, { name: "" }])}>+ Add person</button>
@@ -200,7 +217,7 @@ function PeopleStep({ bill, busy, run, onBill, onNext }: { bill: Bill; busy: boo
               <td>
                 <div className="chips">
                   {names.map((n) => (
-                    <button key={n} className={`chip ${(asg[it.id] ?? []).includes(n) ? "sel" : ""}`} onClick={() => toggle(it.id, n)}>{n}</button>
+                    <button key={n} className={`chip ${(asg[it.id] ?? []).includes(n) ? "sel" : ""}`} style={{ ["--tone" as string]: tone(n) }} aria-pressed={(asg[it.id] ?? []).includes(n)} onClick={() => toggle(it.id, n)}>{n}</button>
                   ))}
                   <button className="chip ghost" onClick={() => everyone(it.id)}>everyone</button>
                 </div>
@@ -210,7 +227,7 @@ function PeopleStep({ bill, busy, run, onBill, onNext }: { bill: Bill; busy: boo
         </tbody>
       </table>
       <div className="totals">
-        {names.map((n) => <span key={n}><b>{n}</b> {money(Math.round(preview[n] ?? 0), cur)}</span>)}
+        {names.map((n) => <span key={n} className="tot"><Avatar name={n} /> <b>{n}</b> {money(Math.round(preview[n] ?? 0), cur)}</span>)}
         <span className="muted">before tax/tip</span>
       </div>
       {unassigned.length > 0 && <div className="alert warn">Still unassigned: {unassigned.map((i) => i.name).join(", ")}</div>}
@@ -221,7 +238,7 @@ function PeopleStep({ bill, busy, run, onBill, onNext }: { bill: Bill; busy: boo
             payer,
             assignment: Object.fromEntries(Object.entries(asg).map(([k, v]) => [k, v.filter((n) => names.includes(n))])),
           })).then((b) => { if (b) { onBill(b); onNext(); } })}>
-          Settle up →
+          Settle up
         </button>
       </div>
     </section>
@@ -237,22 +254,22 @@ function SettleStep({ bill, busy, run, onNext }: { bill: Bill; busy: boolean; ru
   if (!s) return <section className="card"><p className="muted">Calculating…</p></section>;
   return (
     <section className="card">
-      <h2>3 · Fewest payments to square up</h2>
+      <h2>Fewest payments to square up</h2>
       <div className="shares">
         {Object.entries(s.owed).map(([p, c]) => (
-          <div key={p} className="share"><span>{p}</span><b>{money(c, cur)}</b><small>{p === s.payer ? "own share · paid the bill" : "share incl. tax & tip"}</small></div>
+          <div key={p} className={`share ${p === s.payer ? "payer-share" : ""}`}><span className="who"><Avatar name={p} /> {p}</span><b>{money(c, cur)}</b><small>{p === s.payer ? "own share · paid the bill" : "share incl. tax & tip"}</small></div>
         ))}
       </div>
       <h3>{s.transfers.length} payment{s.transfers.length === 1 ? "" : "s"} <span className="badge good">minimum possible</span></h3>
       <ul className="transfers">
         {s.transfers.map((t) => (
-          <li key={t.from}><b>{t.from}</b> <span className="arrow">→</span> <b>{t.to}</b> <span className="amt">{money(t.amountCents, cur)}</span></li>
+          <li key={t.from}><Avatar name={t.from} /> <b>{t.from}</b> <span className="arrow">pays</span> <Avatar name={t.to} /> <b>{t.to}</b> <span className="amt">{money(t.amountCents, cur)}</span></li>
         ))}
       </ul>
       {summary && <div className="ok">{summary}</div>}
       <div className="actions">
         <button className="primary" disabled={busy} onClick={() => run(() => api.propose(bill.id)).then((r) => { if (r) { setSummary(r.summary); onNext(); } })}>
-          {busy ? "Asking the agent…" : "Ask the agent to prepare PayPal requests →"}
+          {busy ? "Asking the agent…" : "Ask the agent to prepare PayPal requests"}
         </button>
       </div>
       <p className="muted small">The agent can only propose. Each request waits for your approval in the next step.</p>
@@ -281,14 +298,14 @@ export function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: C
 
   return (
     <section className="card">
-      <h2>4 · Approve, then track</h2>
+      <h2>Approve, then track</h2>
       <h3>Waiting for you ({pending.length})</h3>
       {pending.length === 0 && <p className="muted empty">Nothing waiting for approval. Ask the agent again after a few days to check for unpaid requests.</p>}
       {pending.map((a) => (
         <div key={a.id} className="approval">
           <div>
             <div className="kind">{a.action.kind === "create_request" ? "PayPal request" : a.action.kind === "send_reminder" ? "Reminder" : "Cancel"}</div>
-            <b>{a.action.debtor}</b> {a.action.amountCents != null && <>· {money(a.action.amountCents, cur)}</>}
+            <div className="who-line"><Avatar name={a.action.debtor ?? ""} /> <b>{a.action.debtor}</b> {a.action.amountCents != null && <span className="amt">{money(a.action.amountCents, cur)}</span>}</div>
             <div className="muted">{a.action.reason}</div>
           </div>
           <div className="row">
@@ -304,7 +321,7 @@ export function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: C
         <tbody>
           {requests.map((r) => (
             <tr key={r.id}>
-              <td>{r.debtor}<div className="muted small">{r.id}</div></td>
+              <td><div className="who-line"><Avatar name={r.debtor} /> {r.debtor}</div><div className="muted small mono">{r.id}</div></td>
               <td className="num">{money(r.amountCents, cur)}</td>
               <td><span className={`status ${r.status}`}>{r.status}</span></td>
               <td>{r.remindersSent}</td>
@@ -319,7 +336,7 @@ export function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: C
       </table>
 
       <div className="actions row">
-        {config.gateway === "mock" && <button className="ghost" disabled={busy} onClick={() => act("advance", () => api.advance(config.reminderAfterDays + 1))}>⏩ Skip {config.reminderAfterDays + 1} days</button>}
+        {config.gateway === "mock" && <button className="ghost" disabled={busy} onClick={() => act("advance", () => api.advance(config.reminderAfterDays + 1))}>Skip {config.reminderAfterDays + 1} days</button>}
         <button className="ghost" disabled={busy} onClick={() => act("propose", () => api.propose(bill.id))}>{working === "propose" ? "Asking the agent…" : "Ask the agent to check for unpaid"}</button>
       </div>
 
