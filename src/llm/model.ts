@@ -6,7 +6,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 export type Provider = "google" | "openai" | "anthropic";
 
 const DEFAULT_MODEL: Record<Provider, string> = {
-  google: "gemini-2.5-flash",
+  google: "gemini-3.8-flash",
   openai: "gpt-4.1-mini",
   anthropic: "claude-haiku-4-5",
 };
