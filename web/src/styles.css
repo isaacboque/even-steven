@@ -76,3 +76,19 @@ tr.sub td { color: var(--muted); } tr.total td { font-weight: 700; border-bottom
 .foot { margin-top: 32px; text-align: center; }
 .linklike { background: none; border: 0; padding: 0; color: var(--muted, #6b7280); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; }
 .linklike:disabled { opacity: .5; cursor: default; }
+.empty { padding: 14px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
+button:disabled { cursor: progress; }
+.card { overflow-x: auto; }
+@media (max-width: 480px) {
+  main { padding: 16px; }
+  .card { padding: 14px; }
+  h1 { font-size: 20px; }
+  .badges { flex-wrap: wrap; }
+  .stepper button { padding: 6px 10px; font-size: 13px; }
+  .actions { flex-wrap: wrap; } .actions > button { flex: 1 1 100%; }
+  .approval .row { width: 100%; } .approval .row button { flex: 1; }
+  .transfers li { flex-wrap: wrap; }
+  input.money { max-width: 90px; }
+  .items td, .items th { padding: 6px 2px; }
+  .assign td:first-child { width: auto; }
+}
