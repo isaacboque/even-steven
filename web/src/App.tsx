@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRun, type RunFn } from "./useRun";
 import { api, money, toCents, type Approval, type Bill, type Config, type Person, type PaymentRequest, type Settlement, type TraceEvent } from "./api";
 
 type Step = 0 | 1 | 2 | 3;
@@ -15,24 +16,12 @@ export default function App() {
   const [config, setConfig] = useState<Config>();
   const [bill, setBill] = useState<Bill>();
   const [step, setStep] = useState<Step>(0);
-  const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api.config().then(setConfig).catch((e) => setError(e.message));
   }, []);
 
-  const run = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | undefined> => {
-    setBusy(true);
-    setError(undefined);
-    try {
-      return await fn();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  const { busy, error, setError, run } = useRun();
 
   return (
     <div className="shell">
@@ -90,7 +79,6 @@ function maxStep(b: Bill): number {
   return 3;
 }
 
-type RunFn = <T>(fn: () => Promise<T>) => Promise<T | undefined>;
 
 /* ---------- 1. Receipt ---------- */
 function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Config; bill?: Bill; busy: boolean; run: RunFn; onBill: (b: Bill) => void; onNext: () => void }) {
@@ -117,7 +105,7 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
           </button>
         ))}
       </div>
-      {busy && <p className="muted">Reading…</p>}
+      {busy && !draft && <p className="muted" role="status">Reading…</p>}
 
       {draft && bill && (
         <>
@@ -138,13 +126,13 @@ function ReceiptStep({ config, bill, busy, run, onBill, onNext }: { config?: Con
           </table>
           <button className="ghost" onClick={() => setDraft({ ...draft, items: [...draft.items, { id: `i${Date.now()}`, name: "New item", totalCents: 0 }] })}>+ Add line</button>
           {mismatch !== 0 ? (
-            <div className="alert warn">The lines add up to {money(draft.totalCents - mismatch, cur)} but the receipt says {money(draft.totalCents, cur)} (off by {money(mismatch, cur)}). Fix a line before continuing — Even Steven never guesses money.</div>
+            <div className="alert warn">The lines add up to {money(draft.totalCents - mismatch, cur)} but the receipt says {money(draft.totalCents, cur)} (off by {money(Math.abs(mismatch), cur)}, {Math.abs(mismatch)} cent{Math.abs(mismatch) === 1 ? "" : "s"}). Fix a line before continuing — Even Steven never guesses money.</div>
           ) : (
             <div className="ok">✓ Lines, tax and tip add up to the total exactly.</div>
           )}
           <div className="actions">
             <button className="primary" disabled={busy || mismatch !== 0} onClick={() => run(() => api.saveItems(bill.id, draft)).then((b) => { if (b) { onBill(b); onNext(); } })}>
-              Continue →
+              {busy ? "Saving…" : "Continue →"}
             </button>
           </div>
         </>
@@ -264,7 +252,7 @@ function SettleStep({ bill, busy, run, onNext }: { bill: Bill; busy: boolean; ru
       {summary && <div className="ok">{summary}</div>}
       <div className="actions">
         <button className="primary" disabled={busy} onClick={() => run(() => api.propose(bill.id)).then((r) => { if (r) { setSummary(r.summary); onNext(); } })}>
-          Ask the agent to prepare PayPal requests →
+          {busy ? "Asking the agent…" : "Ask the agent to prepare PayPal requests →"}
         </button>
       </div>
       <p className="muted small">The agent can only propose. Each request waits for your approval in the next step.</p>
@@ -273,7 +261,7 @@ function SettleStep({ bill, busy, run, onNext }: { bill: Bill; busy: boolean; ru
 }
 
 /* ---------- 4. Approve & track ---------- */
-function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; busy: boolean; run: RunFn }) {
+export function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; busy: boolean; run: RunFn }) {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const cur = bill.receipt.currency;
@@ -283,7 +271,11 @@ function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; 
     setRequests(r);
   }, [bill.id]);
   useEffect(() => { refresh(); }, [refresh]);
-  const act = (fn: () => Promise<unknown>) => run(fn).then(refresh);
+  const [working, setWorking] = useState<string>();
+  const act = (key: string, fn: () => Promise<unknown>) => {
+    setWorking(key);
+    return run(fn).then(refresh).finally(() => setWorking(undefined));
+  };
   const pending = approvals.filter((a) => a.status === "pending");
   const done = approvals.filter((a) => a.status !== "pending");
 
@@ -291,7 +283,7 @@ function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; 
     <section className="card">
       <h2>4 · Approve, then track</h2>
       <h3>Waiting for you ({pending.length})</h3>
-      {pending.length === 0 && <p className="muted">Nothing to approve. Ask the agent again after a few days to check for unpaid requests.</p>}
+      {pending.length === 0 && <p className="muted empty">Nothing waiting for approval. Ask the agent again after a few days to check for unpaid requests.</p>}
       {pending.map((a) => (
         <div key={a.id} className="approval">
           <div>
@@ -300,8 +292,8 @@ function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; 
             <div className="muted">{a.action.reason}</div>
           </div>
           <div className="row">
-            <button className="ghost" disabled={busy} onClick={() => act(() => api.reject(a.id, "rejected in UI"))}>Reject</button>
-            <button className="primary" disabled={busy} onClick={() => act(() => api.approve(a.id))}>Approve &amp; send</button>
+            <button className="ghost" disabled={busy} onClick={() => act(`reject:${a.id}`, () => api.reject(a.id, "rejected in UI"))}>{working === `reject:${a.id}` ? "Rejecting…" : "Reject"}</button>
+            <button className="primary" disabled={busy} onClick={() => act(`approve:${a.id}`, () => api.approve(a.id))}>{working === `approve:${a.id}` ? "Sending…" : "Approve & send"}</button>
           </div>
         </div>
       ))}
@@ -318,7 +310,7 @@ function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; 
               <td>{r.remindersSent}</td>
               <td>
                 {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noreferrer">open</a>}
-                {config.gateway === "mock" && r.status === "sent" && <button className="chip" onClick={() => act(() => api.markPaid(r.id))}>simulate paid</button>}
+                {config.gateway === "mock" && r.status === "sent" && <button className="chip" disabled={busy} onClick={() => act(`paid:${r.id}`, () => api.markPaid(r.id))}>simulate paid</button>}
               </td>
             </tr>
           ))}
@@ -327,8 +319,8 @@ function ApproveStep({ bill, config, busy, run }: { bill: Bill; config: Config; 
       </table>
 
       <div className="actions row">
-        {config.gateway === "mock" && <button className="ghost" disabled={busy} onClick={() => act(() => api.advance(config.reminderAfterDays + 1))}>⏩ Skip {config.reminderAfterDays + 1} days</button>}
-        <button className="ghost" disabled={busy} onClick={() => act(() => api.propose(bill.id))}>Ask the agent to check for unpaid</button>
+        {config.gateway === "mock" && <button className="ghost" disabled={busy} onClick={() => act("advance", () => api.advance(config.reminderAfterDays + 1))}>⏩ Skip {config.reminderAfterDays + 1} days</button>}
+        <button className="ghost" disabled={busy} onClick={() => act("propose", () => api.propose(bill.id))}>{working === "propose" ? "Asking the agent…" : "Ask the agent to check for unpaid"}</button>
       </div>
 
       {done.length > 0 && (
